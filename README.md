@@ -1,0 +1,2 @@
+# fuboAPI
+RESTy API
