@@ -1,0 +1,20 @@
+{
+  "name": "fuboAPI",
+  "version": "1.0.0",
+  "description": "A RESTy API Server",
+  "repository": "https://github.com/sfrooster/fuboAPI",
+  "author": "Michael Haan <haanmd@gmail.com>",
+  "license": "BSD-3-Clause",
+  "private": false,
+
+  "main": "lib/app.js",
+
+  "devDependencies": {
+    "@types/node": "^16.4.8",
+    "typescript": "^4.3.5"
+  },
+
+  "engines": {
+    "node": ">=14"
+  }
+}
