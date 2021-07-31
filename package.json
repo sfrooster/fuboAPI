@@ -2,7 +2,7 @@
   "name": "fuboAPI",
   "version": "1.0.0",
   "description": "A RESTy API Server",
-  "main": "src/app.ts",
+  "main": "lib/app.js",
   "repository": "https://github.com/sfrooster/fuboAPI",
   "author": "Michael Haan <haanmd@gmail.com>",
   "license": "BSD-3-Clause",
