@@ -22,7 +22,7 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
     protected readonly path: { base: string; list: string; forIndex: (index: number) => string; }
     
     protected constructor(entityName: string) {
-        this.db = new JsonDB(new Config('../.storage/fubo-data.json', true, true, '/'));
+        this.db = new JsonDB(new Config('./.storage/fubo-data.json', true, true, '/'));
         this.path = {
             base: `/${entityName.toLocaleLowerCase()}`,
             get list() {
