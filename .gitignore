@@ -105,3 +105,6 @@ dist
 
 # file storage
 .storage/
+
+#misc
+.DS_Store
