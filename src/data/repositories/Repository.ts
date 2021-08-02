@@ -1,18 +1,23 @@
 import { Config, JsonDB, DatabaseError, DataError } from '../node-json-db-adapter';
 import { Entity } from '../entities/Entity';
+import { Settings } from '../../utilities';
 
 
 
 type Predicate<T extends Entity> = (entity: T) => boolean;
+type DeepPartial<T> = {
+    [P in keyof T]?: DeepPartial<T[P]>;
+};
 
 interface RepositoryWriter<E extends Entity> {
     create: (entity: E) => string | Error;
-    updateOne: (ntityId: string, mergeEntity: E) => true | null | Error;
+    updateOne: (entityId: string, mergeEntity: DeepPartial<E>) => true | null | Error;
 }
 
 interface RepositoryReader<E extends Entity> {
-    find: (predicate: Predicate<E>) => E[] | Error;
-    findOne: (entityId: string) => E | null | Error;
+    findAll(predicate: Predicate<E>): E[] | Error;
+    findFirst(predicate: Predicate<E>): E | null | Error ;
+    findByEntityId(entityId: string): E | null | Error;
 }
 
 
@@ -22,7 +27,10 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
     protected readonly path: { base: string; list: string; forIndex: (index: number) => string; }
     
     protected constructor(entityName: string) {
-        this.db = new JsonDB(new Config('./.storage/fubo-data.json', true, true, '/'));
+        const dataStoreFile = `${Settings.projectRoot}/.storage/fubo-data.json`;
+        console.log(`storing data at ${dataStoreFile}`);
+
+        this.db = new JsonDB(new Config(dataStoreFile, true, true, '/'));
         this.path = {
             base: `/${entityName.toLocaleLowerCase()}`,
             get list() {
@@ -75,7 +83,7 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
         }
     }
 
-    public updateOne(entityId: string, mergeEntity: E): true | null | Error {
+    public updateOne(entityId: string, mergeEntity: DeepPartial<E>): true | null | Error {
         try {
             const index = this.db.getIndex(this.path.list, entityId, "entityId");
             console.log(`DEBUG: ${index}`);
@@ -90,20 +98,28 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
         }
     }
 
-    public find(predicate: Predicate<E>): E[] | Error {
+    public findAll(predicate: Predicate<E>): E[] | Error {
         try {
-            const matches = this.db.filter<E>(this.path.list, (entity: E, index: number | string) => predicate(entity));
-            return matches ? matches : [];
+            return this.db.filter<E>(this.path.list, (entity: E, index: number | string) => predicate(entity)) ?? [];
         }
         catch (e) {
             return this.handleError(e);
         }
     }
 
-    public findOne(entityId: string): E | null | Error {
+    public findFirst(predicate: Predicate<E>): E | null | Error {
         try {
-            const match = this.db.find<E>(this.path.list, (entity: E, index: number | string) => entity.entityId === entityId);
-            return match ? match : null;
+            return this.db.getObject<E[]>(this.path.list).find((entity) => predicate(entity)) ?? null;
+        }
+        catch (e) {
+            return this.handleError(e);
+        }
+    }
+
+    public findByEntityId(entityId: string): E | null | Error {
+        try {
+            const index = this.db.getIndex(this.path.list, entityId, "entityId");
+            return index > -1 ? this.db.getObject<E>(this.path.forIndex(index)) : null;
         }
         catch (e) {
             return this.handleError(e);
