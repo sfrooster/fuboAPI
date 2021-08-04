@@ -15,7 +15,7 @@ module.exports = {
             instances: 2, // limit to two instances
             exec_mode: 'cluster',
             env: {
-                'PORT': 8080
+                'FUBO_API_PORT': 8080
             }
         }
     ]
