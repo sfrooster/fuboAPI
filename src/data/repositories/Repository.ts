@@ -1,6 +1,6 @@
 import { Config, JsonDB, DatabaseError, DataError } from '../node-json-db-adapter';
 import { Entity } from '../entities/Entity';
-import { Settings } from '../../utilities';
+import { getRandomIntInclusive, isError, Settings, sleep } from '../../utilities';
 
 
 
@@ -24,14 +24,16 @@ interface RepositoryReader<E extends Entity> {
 export abstract class Repository<E extends Entity> implements RepositoryWriter<E>, RepositoryReader<E> {
 
     private readonly db: JsonDB;
-    protected readonly path: { base: string; list: string; forIndex: (index: number) => string; }
+    private readonly dataStoreFile: string;
+    protected readonly paths: { base: string; list: string; forIndex: (index: number) => string; }
+    private readyPreviouslyCalled = false;
     
     protected constructor(entityName: string) {
-        const dataStoreFile = `${Settings.projectRoot}/.storage/fubo-data.json`;
-        console.log(`storing data at ${dataStoreFile}`);
+        this.dataStoreFile = `${Settings.projectRoot}/.storage/fubo-data.json`;
 
-        this.db = new JsonDB(new Config(dataStoreFile, true, true, '/'));
-        this.path = {
+        if (Settings.debug) console.debug(`storing data at ${this.dataStoreFile}`);
+
+        this.paths = {
             base: `/${entityName.toLocaleLowerCase()}`,
             get list() {
                 return `${this.base}/list`;
@@ -40,6 +42,27 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
                 return `${this.list}[${index}]`;
             }
         };
+
+        this.db = new JsonDB(new Config(this.dataStoreFile, true, true, '/'));
+    }
+
+    public async ready() {
+        if (this.readyPreviouslyCalled) {
+            return Promise.resolve();
+        }
+        this.readyPreviouslyCalled = true;
+
+        const millisToSleep = getRandomIntInclusive(1000, 5000);
+        if (Settings.debug) console.debug(`sleeping ${millisToSleep} milliseconds before declaring 'ready'...`);
+        await sleep(millisToSleep);
+
+        if (Settings.debug && this.db.exists(this.paths.list)) {
+            console.debug(`path ${this.paths.list} exists - doing nothing...`);
+        }
+        else {
+            if (Settings.debug) console.debug(`path ${this.paths.list} does NOT seem to exist - initializing...`);
+            this.db.push(this.paths.list, [], false);
+        }
     }
 
     private handleError(error: any): Error {
@@ -63,17 +86,33 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
 
             default:
                 console.error(`Error: ${error}`);
-                return new Error(error?.toString() ?? "unknown");
+                return new Error(error?.toString() ?? 'unknown');
         }
     }
 
     public create(entity: E): string | Error {
+        if (Settings.debug) console.debug(`attempting to create ${entity.entityId}, count is: ${this.db.count(this.paths.list)}`);
         try {
-            if (!this.db.exists(this.path.base)) {
-                this.db.push(`${this.path.list}[0]`, entity, true);
+            if (!this.db.exists(this.paths.base)) {
+                if (Settings.debug) console.debug(`list appears non-existent, pushing ${entity.entityId} to index 0`);
+                this.db.push(`${this.paths.list}[0]`, entity, true);
             }
             else {
-                this.db.push(`${this.path.list}[]`, entity, true);
+                if (Settings.debug) console.debug(`list appears to EXIST, conducting duplicate check for ${entity.entityId}`);
+                const existing = this.findFirst((candidate: E) => Entity.areEqual(candidate, entity));
+                if (!isError(existing)) {
+                    if (existing !== null) {
+                        if (Settings.debug) console.debug(`${Entity.entityName}(${entity.entityId}) already exists - not adding`);
+                        return existing.entityId;
+                    }
+                    else {
+                        if (Settings.debug) console.debug(`${Entity.entityName}(${entity.entityId}) seems new - ADDING`);
+                        this.db.push(`${this.paths.list}[]`, entity, true);
+                    }
+                }
+                else {
+                    return existing;
+                }
             }
 
             return entity.entityId;
@@ -85,12 +124,12 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
 
     public updateOne(entityId: string, mergeEntity: DeepPartial<E>): true | null | Error {
         try {
-            const index = this.db.getIndex(this.path.list, entityId, "entityId");
-            console.log(`DEBUG: ${index}`);
+            const index = this.db.getIndex(this.paths.list, entityId, 'entityId');
+
             if (index === -1) {
                 return null;
             }
-            this.db.push(this.path.forIndex(index), mergeEntity, false);
+            this.db.push(this.paths.forIndex(index), mergeEntity, false);
             return true;
         }
         catch (e) {
@@ -100,7 +139,7 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
 
     public findAll(predicate: Predicate<E>): E[] | Error {
         try {
-            return this.db.filter<E>(this.path.list, (entity: E, index: number | string) => predicate(entity)) ?? [];
+            return this.db.filter<E>(this.paths.list, (entity: E, index: number | string) => predicate(entity)) ?? [];
         }
         catch (e) {
             return this.handleError(e);
@@ -109,17 +148,18 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
 
     public findFirst(predicate: Predicate<E>): E | null | Error {
         try {
-            return this.db.getObject<E[]>(this.path.list).find((entity) => predicate(entity)) ?? null;
+            return this.db.getObject<E[]>(this.paths.list).find((entity) => predicate(entity)) ?? null;
         }
         catch (e) {
+            console.error(`findFirst error: ${(e as Error).stack}`);
             return this.handleError(e);
         }
     }
 
     public findByEntityId(entityId: string): E | null | Error {
         try {
-            const index = this.db.getIndex(this.path.list, entityId, "entityId");
-            return index > -1 ? this.db.getObject<E>(this.path.forIndex(index)) : null;
+            const index = this.db.getIndex(this.paths.list, entityId, 'entityId');
+            return index > -1 ? this.db.getObject<E>(this.paths.forIndex(index)) : null;
         }
         catch (e) {
             return this.handleError(e);
