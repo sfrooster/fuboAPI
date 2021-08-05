@@ -10,7 +10,7 @@ export const getRandomIntInclusive = (min: number, max: number) => {
 
 export const isError = util.types.isNativeError;
 
-export const isNumber = (value: any) => typeof value === 'number';
+export const isNumber = (value: any): value is number => typeof value === 'number';
 
 export const parseIntPlus = (value: any, roundingAction = RoundingAction.Down): number =>
     isNumber(value) ?

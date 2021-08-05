@@ -1,9 +1,19 @@
+import { Expose } from 'class-transformer';
 import { Entity } from "./Entity";
 
 
 
 export class User extends Entity {
-    constructor(public fullName: string, public email: string) {
+    @Expose()
+    public fullName: string;
+
+    @Expose()
+    public email: string;
+
+    constructor(fullName: string, email: string) {
         super();
+
+        this.fullName = fullName;
+        this.email = email;
     }
 }

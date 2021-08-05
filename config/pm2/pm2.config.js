@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'fubo-api',
-            script: 'dist/app.js',
+            script: 'dist/api/server.js',
             stop_exit_codes: [0],
             watch: false,
             restart_delay: 200,

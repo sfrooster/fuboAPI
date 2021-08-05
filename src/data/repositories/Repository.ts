@@ -1,6 +1,6 @@
 import { Config, JsonDB, DatabaseError, DataError } from '../node-json-db-adapter';
 import { Entity } from '../entities/Entity';
-import { getRandomIntInclusive, isError, Settings, sleep } from '../../utilities';
+import { getRandomIntInclusive, isError, isNumber, Settings, sleep } from '../../utilities';
 
 
 
@@ -122,13 +122,23 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
         }
     }
 
-    public updateOne(entityId: string, mergeEntity: DeepPartial<E>): true | null | Error {
+    public updateOne(index: number, mergeEntity: DeepPartial<E>): true | null | Error;
+    public updateOne(entityId: string, mergeEntity: DeepPartial<E>): true | null | Error;
+    public updateOne(entityIdOrIndex: string | number, mergeEntity: DeepPartial<E>): true | null | Error {
         try {
-            const index = this.db.getIndex(this.paths.list, entityId, 'entityId');
+            let index: number;
+
+            if (!isNumber(entityIdOrIndex)) {
+                index = this.db.getIndex(this.paths.list, entityIdOrIndex, 'entityId');
+            }
+            else {
+                index = entityIdOrIndex;
+            }
 
             if (index === -1) {
                 return null;
             }
+
             this.db.push(this.paths.forIndex(index), mergeEntity, false);
             return true;
         }
@@ -159,6 +169,25 @@ export abstract class Repository<E extends Entity> implements RepositoryWriter<E
     public findByEntityId(entityId: string): E | null | Error {
         try {
             const index = this.db.getIndex(this.paths.list, entityId, 'entityId');
+            return index > -1 ? this.db.getObject<E>(this.paths.forIndex(index)) : null;
+        }
+        catch (e) {
+            return this.handleError(e);
+        }
+    }
+
+    public findIndexByEntityId(entityId: string): number | null | Error {
+        try {
+            const index = this.db.getIndex(this.paths.list, entityId, 'entityId');
+            return index > -1 ? index : null;
+        }
+        catch (e) {
+            return this.handleError(e);
+        }
+    }
+
+    public findByIndex(index: number): E | null | Error {
+        try {
             return index > -1 ? this.db.getObject<E>(this.paths.forIndex(index)) : null;
         }
         catch (e) {

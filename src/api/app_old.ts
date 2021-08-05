@@ -1,6 +1,6 @@
-import { User } from './data/entities/User';
-import { UserRepository } from './data/repositories/UserRepository';
-import { isError, sleep } from './utilities';
+import { User } from '../data/entities/User';
+import { UserRepository } from '../data/repositories/UserRepository';
+import { isError } from '../utilities';
 
 
 
