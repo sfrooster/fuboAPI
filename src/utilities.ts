@@ -12,6 +12,8 @@ export const isError = util.types.isNativeError;
 
 export const isNumber = (value: any): value is number => typeof value === 'number';
 
+export const isString = (value: any): value is string => typeof value === 'string';
+
 export const parseIntPlus = (value: any, roundingAction = RoundingAction.Down): number =>
     isNumber(value) ?
         Math.round(value) === value ?

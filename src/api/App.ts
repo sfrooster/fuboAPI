@@ -1,9 +1,7 @@
 import express from 'express';
-// import { transformAndValidate } from "class-transformer-validator";
-import { Entity } from '../data/entities/Entity';
 import { User } from '../data/entities/User';
 import { UserRepository } from '../data/repositories/UserRepository';
-import { isError, Settings } from '../utilities';
+import { isError, isNumber, Settings } from '../utilities';
 
 
 
@@ -36,24 +34,33 @@ class AppInternal {
                     console.debug(`route POST /users body: ${JSON.stringify(req.body)}`);
                 }
 
-                //const user = Entity.jsonToEntityInstance(User, req.body);
-                const user = await Entity.validateAndTransformJson(User, req.body);
+                const user = User.fromLiteral(req.body);
 
-                if (Settings.debug) {
-                    console.debug(`route POST /users converted: ${JSON.stringify(user)}`);
-                }
-
-                const result = this.userRepository.create(user);
-
-                if (Settings.debug) {
-                    console.debug(`route POST /users result: ${JSON.stringify(result)}`);
-                }
-
-                if (isError(result)) {
+                if (isError(user)) {
+                    console.error(`could not hydrate User from body`);
                     res.sendStatus(500);
                 }
+                else if (isNumber(user)) {
+                    console.error(`bad post reqquest`);
+                    res.sendStatus(400);
+                }
                 else {
-                    res.status(200).json(result);
+                    if (Settings.debug) {
+                        console.debug(`route POST /users converted: ${JSON.stringify(user)}`);
+                    }
+
+                    const result = this.userRepository.create(user as User);
+
+                    if (Settings.debug) {
+                        console.debug(`route POST /users result: ${JSON.stringify(result)}`);
+                    }
+
+                    if (isError(result)) {
+                        res.sendStatus(500);
+                    }
+                    else {
+                        res.status(200).json(result);
+                    }
                 }
             }
             catch (err) {
@@ -146,38 +153,38 @@ class AppInternal {
         //     }
         // });
 
-        // router.get('/users/:entityId', (req: express.Request, res: express.Response, next: {}) => {
-        //     const entityId = req.params.entityId;
+        router.get('/users/:entityId', (req: express.Request, res: express.Response, next: {}) => {
+            const entityId = req.params.entityId;
 
-        //     if (Settings.debug) {
-        //         console.debug(`route GET /users/${entityId}`);
-        //     }
+            if (Settings.debug) {
+                console.debug(`route GET /users/${entityId}`);
+            }
 
-        //     const user = this.userRepository.findByEntityId(entityId);
-        //     if (!isError(user)) {
-        //         if (user === null) {
-        //             if (Settings.debug) {
-        //                 console.debug(`route get /users/${entityId}: 404(not found)`);
-        //             }
+            const user = this.userRepository.findByEntityId(entityId);
+            if (!isError(user)) {
+                if (user === null) {
+                    if (Settings.debug) {
+                        console.debug(`route get /users/${entityId}: 404(not found)`);
+                    }
 
-        //             res.sendStatus(404);
-        //         }
-        //         else {
-        //             if (Settings.debug) {
-        //                 console.debug(`route get /users/${entityId}: ${JSON.stringify(user)}`);
-        //             }
+                    res.sendStatus(404);
+                }
+                else {
+                    if (Settings.debug) {
+                        console.debug(`route get /users/${entityId}: ${JSON.stringify(user)}`);
+                    }
 
-        //             res.status(200).json(user);
-        //         }
-        //     }
-        //     else {
-        //         if (Settings.debug) {
-        //             console.debug(`route get /users/${entityId}: 500(internal error) = ${JSON.stringify(user)}`);
-        //         }
+                    res.status(200).json(user);
+                }
+            }
+            else {
+                if (Settings.debug) {
+                    console.debug(`route get /users/${entityId}: 500(internal error) = ${JSON.stringify(user)}`);
+                }
 
-        //         res.status(500).json(user);
-        //     }
-        // });
+                res.status(500).json(user);
+            }
+        });
 
         this.express.use('/', router);
     }
