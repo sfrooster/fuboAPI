@@ -1,6 +1,6 @@
 import { v4 as uuidV4, } from 'uuid';
 import { Entity } from "./Entity";
-import { isString } from '../../utilities';
+import { isString, Settings } from '../../utilities';
 
 
 
@@ -17,6 +17,9 @@ export class User extends Entity {
 
     public static fromLiteral<L extends {[key: string]: any}>(literal: L, acceptEntityId: boolean = false): User | Error | number {
         if (!acceptEntityId && literal.entityId) {
+            if (Settings.debug) {
+                console.error(`fromLiteral: acceptEntityId = ${acceptEntityId} but literal.entityId = ${literal.entityId} - returning 400`);
+            }
             return 400;
         }
 

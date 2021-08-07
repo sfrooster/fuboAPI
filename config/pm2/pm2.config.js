@@ -12,7 +12,7 @@ module.exports = {
             error_file: 'dist/logs/err.log',
             out_file: 'dist/logs/out.log',
             time: true,
-            instances: 2, // limit to two instances
+            instances: 1, // limit instances
             exec_mode: 'cluster',
             env: {
                 'FUBO_API_PORT': 8080

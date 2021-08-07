@@ -34,7 +34,8 @@
     "start:cluster:logs": "yarn start:cluster; yarn logs",
     "start:cluster:debug:logs": "yarn start:cluster:debug; yarn logs",
     "stop:cluster": "pm2 delete fubo-api",
-    "stop:cluster:hard": "yarn stop:cluster; sleep 5; pm2 kill"
+    "stop:cluster:hard": "yarn stop:cluster; sleep 5; pm2 kill",
+    "bounce:cluster:debug:logs:clean": "yarn stop:cluster:hard; yarn rebuild; clear; yarn start:cluster:debug:logs"
   },
   "engines": {
     "node": ">=14"

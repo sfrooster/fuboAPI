@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+
+# create users
+echo "creating user u1"
+user1=$(curl -s -X POST http://localhost:8080/users -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "fullName": "JJ Abrams", "email": "ewok@tatooine.com" }' | jq -r '.')
+echo ""
+
+echo "creating user u2"
+user2=$(curl -s -X POST http://localhost:8080/users -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "fullName": "Luke Skywalker", "email": "forceguy@jedi.com" }' | jq -r '.')
+echo ""
+
+echo "creating user u3"
+user3=$(curl -s -X POST http://localhost:8080/users -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "fullName": "Darth Vader", "email": "darkrules@sith.com" }' | jq -r '.')
+echo ""
+
+
+# retrieves users
+echo "retrieve u1: $user1"
+curl -s http://localhost:8080/users/${user1} -H 'Accept: application/json' -H 'Content-Type: application/json' | jq -r '.'
+echo ""
+
+echo "retrieve u2: $user2"
+curl -s http://localhost:8080/users/${user2} -H 'Accept: application/json' -H 'Content-Type: application/json' | jq -r '.'
+echo ""
+
+echo "retrieve u3: $user3"
+curl -s http://localhost:8080/users/${user3} -H 'Accept: application/json' -H 'Content-Type: application/json' | jq -r '.'
+echo ""
+
+
+# update a user
+echo "update u3: $user3"
+curl -s -X PUT http://localhost:8080/users/${user3} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "fullName": "Anakin Skywalker", "email": "lightside@swranch.com" }'
+#curl -s -X PUT http://localhost:8080/users/${user3} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "fullName": "Anakin Skywalker", "email": "lightside@swranch.com" }' | jq -r '.'
+echo -e "\n"
+
+# try to create a user and specidy the entityId - bad
+sleep 1
+echo "trying to specify entityId for POST /users: 4ddf4c88-3a1c-4c3d-a842-6a07ebd08f02"
+curl -s -X POST http://localhost:8080/users -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "4ddf4c88-3a1c-4c3d-a842-6a07ebd08f02", "fullName": "strong bad", "email": "sb@homestar.com" }'
+#curl -s -X POST http://localhost:8080/users -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "4ddf4c88-3a1c-4c3d-a842-6a07ebd08f02", "fullName": "strong bad", "email": "sb@homestar.com" }' | jq -r '.'
+echo -e "\n"
+
+# try to update a user and specidy the entityId (same, but in the body) - bad
+sleep 1
+echo "trying to specify entityId for PUT /users ${user1}"
+curl -s -X PUT http://localhost:8080/users/${user1} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "'${user1}'", "fullName": "Joey Starlord", "email": "ewok@tatooine.com" }'
+#curl -s -X PUT http://localhost:8080/users/${user1} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "'${user1}'", "fullName": "Joey Starlord", "email": "ewok@tatooine.com" }' | jq -r '.'
+echo -e "\n"
+
+# try to update a user abd specidy the entityId (different from the body) - bad
+sleep 1
+echo "trying to specify entityId for PUT /users ${user2}"
+curl -s -X PUT http://localhost:8080/users/${user2} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "e6965a94-b069-4cc3-bfa0-c29bcf76ec3e", "fullName": "Madam Curie", "email": "iglow@radium.com" }'
+#curl -s -X PUT http://localhost:8080/users/${user2} -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{ "entityId": "e6965a94-b069-4cc3-bfa0-c29bcf76ec3e", "fullName": "Madam Curie", "email": "iglow@radium.com" }' | jq -r '.'
+echo -e "\n"

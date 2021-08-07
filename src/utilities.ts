@@ -1,4 +1,5 @@
 import * as util from 'util';
+import { validate, version } from 'uuid';
 
 
 
@@ -13,6 +14,8 @@ export const isError = util.types.isNativeError;
 export const isNumber = (value: any): value is number => typeof value === 'number';
 
 export const isString = (value: any): value is string => typeof value === 'string';
+
+export const isUuidV4 = (value: any): boolean => value && validate(value) && version(value) === 4;
 
 export const parseIntPlus = (value: any, roundingAction = RoundingAction.Down): number =>
     isNumber(value) ?
