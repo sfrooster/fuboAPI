@@ -28,7 +28,7 @@
     "rebuild": "yarn clean; yarn build",
     "logs": "pm2 logs fubo-api --lines 2000",
     "monitor": "pm2 monit",
-    "run:debug": "node --trace-deprecation ./dist/api/app.js",
+    "run:debug": "FUBO_DEBUG=true node --trace-deprecation ./dist/api/app.js",
     "start:cluster": "pm2 start ./config/pm2/pm2.config.js",
     "start:cluster:debug": "FUBO_DEBUG=true pm2 start ./config/pm2/pm2.config.js",
     "start:cluster:logs": "yarn start:cluster; yarn logs",
