@@ -1,4 +1,5 @@
 import * as util from 'util';
+import { validate, version } from 'uuid';
 
 
 
@@ -10,17 +11,46 @@ export const getRandomIntInclusive = (min: number, max: number) => {
 
 export const isError = util.types.isNativeError;
 
+export const isNumber = (value: any): value is number => typeof value === 'number';
+
+export const isString = (value: any): value is string => typeof value === 'string';
+
+export const isUuidV4 = (value: any): boolean => value && validate(value) && version(value) === 4;
+
+export const parseIntPlus = (value: any, roundingAction = RoundingAction.Down): number =>
+    isNumber(value) ?
+        Math.round(value) === value ?
+            value
+            :
+            roundingAction === RoundingAction.Down ? Math.floor(value) : Math.ceil(value)
+        :
+        (/^[-+]?(\d+|Infinity)$/.test(value)) ?
+            parseIntPlus(Number(value), roundingAction)
+            :
+            NaN;
+
+export enum RoundingAction {
+    Down,
+    None,
+    Up
+}
+
 export const sleep = (millisToSleep: number) => new Promise(resolve => setTimeout(resolve, millisToSleep));
 
 export class Settings {
-    private static readonly _projectRoot = __dirname;
-    public static get projectRoot() {
-        return Settings._projectRoot;
+    private static readonly _apiListenPort = parseIntPlus(process.env.FUBO_API_PORT);
+    public static get apiListenPort() {
+        return Settings._apiListenPort;
     }
 
     private static readonly _debug = ['1', 'true'].includes((process.env.FUBO_DEBUG ?? 'false').toLocaleLowerCase());
     public static get debug() {
         return Settings._debug;
+    }
+
+    private static readonly _projectRoot = __dirname;
+    public static get projectRoot() {
+        return Settings._projectRoot;
     }
 
     private constructor() {}

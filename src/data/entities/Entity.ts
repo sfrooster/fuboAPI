@@ -1,7 +1,7 @@
 import isEqual from 'lodash.isequal';
 import omit from 'lodash.omit';
 import { v4 as uuidV4 } from 'uuid';
-import { Settings } from '../../utilities';
+import { isUuidV4, Settings } from '../../utilities';
 
 
 
@@ -28,9 +28,18 @@ export abstract class Entity {
         }
     }
 
-    public readonly entityId: string;
 
-    protected constructor() {
-        this.entityId = uuidV4();
+    public readonly entityId: string
+
+    protected constructor();
+    protected constructor(entityId: string);
+    protected constructor(entityId?: string) {
+        if (!entityId) {
+            this.entityId = uuidV4();
+        }
+        else if (isUuidV4(entityId)) {
+            this.entityId = entityId;
+        }
+        else throw new Error(`${entityId} is not a valid v4 uuid`);
     }
 }
